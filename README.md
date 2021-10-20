@@ -56,3 +56,5 @@ Options:
 - [ ] Cleaning up the imports
 - [ ] Moving stuff out of the main
 - [ ] Using opengl to avoid the 3 hours runtime
+- [ ] Removing the `.replace_err()` and replacing it with `.or(Err())` or making a `or_err()` 
+  util
