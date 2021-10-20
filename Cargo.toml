@@ -1,5 +1,5 @@
 [package]
-name = "auto_xkcd"
+name = "xkcd_paper"
 version = "0.1.0"
 edition = "2021"
 
