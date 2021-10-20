@@ -51,3 +51,6 @@ Options:
 ## Avenue of improvement
 
 - [ ] Caching the image, so the program can work offline. (Note : I'd currently advice to set a fallback wallpaper before calling the program)
+- [ ] Cleaning up the imports
+- [ ] Moving stuff out of the main
+- [ ] Using opengl to avoid the 3 hours runtime
