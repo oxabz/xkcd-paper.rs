@@ -5,6 +5,8 @@ It gathers background directly from the xkcd API and pre-process it to be a suit
 
 You can pick how the xkcd is picked (nth/random/last), the background and foreground colors.
 
+![](preview.png)
+
 ## Dependency
 
 - `feh`: An image viewer that  can serv as a wallpaper command
