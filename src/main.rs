@@ -58,7 +58,7 @@ fn setup_args() -> anyhow::Result<Args>{
     args.flag("h", "help", "Print the usage menu");
     args.option("m","mode", "xkcd selection", "random/last/<number>", Occur::Optional, Some("random".to_string()));
     args.option("s","size", "screen size", "<width>x<height>", Occur::Optional, Some("1366x768".to_string()));
-    args.option("p","padding", "padding around the screen", "<horizontal>:<height>", Occur::Optional, Some("20:20".to_string()));
+    args.option("p","padding", "padding around the screen", "<horizontal>:<vertical>", Occur::Optional, Some("20:20".to_string()));
     args.option("f","foreground", "foreground color", "RRGGBB", Occur::Optional, Some("4ECDC4".to_string()));
     args.option("b","background", "background color", "RRGGBB", Occur::Optional, Some("002A32".to_string()));
     args.parse(std::env::args())?;

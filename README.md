@@ -58,3 +58,4 @@ Options:
 - [ ] Using opengl to avoid the 3 hours runtime
 - [ ] Removing the `.replace_err()` and replacing it with `.or(Err())` or making a `or_err()` 
   util
+- [ ] making the padding top:bot:left:right rather than horizontal and vertical
