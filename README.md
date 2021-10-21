@@ -23,7 +23,7 @@ If you need help to install cargo I'll point you at the [install section of the 
 git clone git@github.com:oxabz/xkcd-paper.rs.git      # Cloning the project
 sudo apt install feh                                  # or yay -Syu feh
 cd xkcd-paper
-rustup default nightly                                # Selecting the right toolchain to build the project
+rustup default stable                                 # Selecting the right toolchain to build the project
 cargo install                                         # installing dependency
 cargo build --release                                 # Building the project
 sudo cp target/release/xkcd_paper /usr/bin/xkcd-paper # Copying the result to bin folder 
