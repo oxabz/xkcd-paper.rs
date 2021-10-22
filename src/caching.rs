@@ -22,12 +22,14 @@ fn get_home_dir()->Result<String,CachingError>{
 
 async fn cache_xkcd(num: usize, img: &[u8])->Result<(),CachingError>{
     let home = get_home_dir()?;
-    let path = Path::new(&format!("{}/{}/{}", home, CACHE_PATH, num));
+    let spath = format!("{}/{}/{}", home, CACHE_PATH, num);
+    let path = Path::new(&spath);
     fs::write(path, img).await.replace_err(CachingError::WriteError)
 }
 
 async fn get_cached_xkcd(num: usize)->Result<Vec<u8>,CachingError>{
     let home = get_home_dir()?;
-    let path = Path::new(&format!("{}/{}/{}", home, CACHE_PATH, num));
-    fs::read(path).await.replace_err(CachingError::NotFound(format!("{}/{}/{}", home, CACHE_PATH, num)))
+    let spath = format!("{}/{}/{}", home, CACHE_PATH, num);
+    let path = Path::new(&spath);
+    fs::read(path).await.replace_err(CachingError::NotFound(spath.clone()))
 }
