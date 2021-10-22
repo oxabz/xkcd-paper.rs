@@ -8,8 +8,11 @@ const CACHE_PATH: &str = ".cache/xkcd-paper";
 
 #[derive(Error, Debug)]
 enum CachingError{
+    #[error("Couldn't get the $HOME environment variable")]
     NoHomeDir,
-    NotFound,
+    #[error("Couldn't open the file at `{0}`")]
+    NotFound(String),
+    #[error("Error writing in the cache")]
     WriteError
 }
 
@@ -26,5 +29,5 @@ async fn cache_xkcd(num: usize, img: &[u8])->Result<(),CachingError>{
 async fn get_cached_xkcd(num: usize)->Result<Vec<u8>,CachingError>{
     let home = get_home_dir()?;
     let path = Path::new(&format!("{}/{}/{}", home, CACHE_PATH, num));
-    fs::read(path).await.replace_err(CachingError::NotFound)
+    fs::read(path).await.replace_err(CachingError::NotFound(format!("{}/{}/{}", home, CACHE_PATH, num)))
 }
