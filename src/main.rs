@@ -17,6 +17,7 @@ use std::io::Cursor;
 use std::str::FromStr;
 use thiserror::Error;
 use crate::args::{setup_args, get_args};
+use std::process::exit;
 
 
 #[tokio::main(flavor = "current_thread")]
@@ -29,7 +30,7 @@ async fn main() {
         Ok(args) => args,
         Err(err) => {
             eprintln!("Args error : {}", err);
-            std::process::exit(0);
+            exit(1);
         }
     };
 
@@ -37,13 +38,13 @@ async fn main() {
     let help = args.value_of::<bool>("help").unwrap_or(false);
     if help {
         println!("{}", args.full_usage());
-        std::process::exit(0);
+        exit(0);
     }
 
     let (mode, (width, height), padding, fg, bg) = match get_args(&args) {
         Err(err) => {
             eprintln!("{}", err);
-            std::process::exit(1);
+            exit(1);
         }
         Ok(val) => val,
     };
@@ -70,7 +71,7 @@ async fn main() {
 
     if num > last && num < 1 {
         eprintln!("{} is not a valid xkcd number", num);
-        return;
+        exit(1);
     }
 
     //////////////////////////////////////////////////////////////////////
@@ -84,6 +85,10 @@ async fn main() {
             return;
         }
     };
+
+    //////////////////////////////////////////////////////////////////////
+    /////////////////////// processing the image /////////////////////////
+    //////////////////////////////////////////////////////////////////////
 
     let img = ImageReader::new(Cursor::new(image))
         .with_guessed_format()
@@ -126,13 +131,18 @@ async fn main() {
             (x as f32 * grey + y as f32 * (1.0 - grey)) as u8
         });
     });
+
+    // Converting back to png
     let canva = DynamicImage::ImageRgba8(canva);
     let mut image: Vec<u8> = Vec::new();
     canva
         .write_to(&mut image, image::ImageOutputFormat::Png)
         .unwrap();
 
-    //Setting the wallpaper using feh
+    //////////////////////////////////////////////////////////////////////
+    ////////////// Setting the wallpaper using feh ///////////////////////
+    //////////////////////////////////////////////////////////////////////
+
     let mut child = match set_wallpaper(&image).await {
         Ok(c) => c,
         Err(err) => {
