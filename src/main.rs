@@ -7,7 +7,7 @@ mod args;
 
 use crate::utils::ResultExt;
 use crate::wallpaper::set_wallpaper;
-use crate::XkcdMode::{Last, Nth, Random};
+use crate::args::XkcdMode;
 use getopts::Occur;
 use image::imageops::FilterType;
 use image::io::Reader as ImageReader;

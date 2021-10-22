@@ -4,12 +4,13 @@ use args::Args;
 use image::Rgba;
 use crate::utils::ResultExt;
 use getopts::Occur;
+use thiserror::Error;
 
 const PROGRAM_DESC: &str = "Run this program";
 const PROGRAM_NAME: &str = "program";
 
 #[derive(Debug)]
-enum XkcdMode {
+pub enum XkcdMode {
     Random,
     Last,
     Nth(usize),
