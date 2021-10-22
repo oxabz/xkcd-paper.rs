@@ -2,6 +2,7 @@
 mod utils;
 mod wallpaper;
 mod xkcd;
+mod caching;
 
 use crate::utils::ResultExt;
 use crate::wallpaper::set_wallpaper;
@@ -63,7 +64,7 @@ fn setup_args() -> anyhow::Result<Args> {
     args.option(
         "s",
         "size",
-        "screen size",
+        "screen size (in case you have more than one screen I'd recommend to set it to your biggest)",
         "<width>x<height>",
         Occur::Optional,
         Some("1366x768".to_string()),
@@ -71,7 +72,7 @@ fn setup_args() -> anyhow::Result<Args> {
     args.option(
         "p",
         "padding",
-        "padding around the screen",
+        "padding around the screen (in case you have more than one screen I'd recommend setting it to half the size difference between your screens + a bit of additional padding)",
         "<horizontal>:<vertical>",
         Occur::Optional,
         Some("20:20".to_string()),
@@ -126,59 +127,48 @@ fn get_colors(args: &Args, param: &str) -> anyhow::Result<Rgba<u8>> {
     }
 }
 
+fn get_args(args: &Args) -> anyhow::Result<(XkcdMode, (usize,usize), (usize,usize), Rgba<u8>, Rgba<u8>)>{
+    let mode = args.value_of::<XkcdMode>("mode")?;
+    let size = get_size(args)?;
+    let padding = get_padding(args)?;
+    let fg = get_colors(args , "foreground")?;
+    let bg = get_colors(args , "background")?;
+    Ok((mode,size,padding,fg,bg))
+}
+
 #[tokio::main(flavor = "current_thread")]
 async fn main() {
+    //////////////////////////////////////////////////////////////////////
+    ///////////////////////// Parsing Args ///////////////////////////////
+    //////////////////////////////////////////////////////////////////////
+
     let args = match setup_args() {
         Ok(args) => args,
         Err(err) => {
             eprintln!("Args error : {}", err);
-            return;
+            std::process::exit(0);
         }
     };
 
+    // Printing the help and exiting
     let help = args.value_of::<bool>("help").unwrap_or(false);
     if help {
         println!("{}", args.full_usage());
-        return;
+        std::process::exit(0);
     }
 
-    let mode = match args.value_of::<XkcdMode>("mode") {
+    let (mode, (width, height), padding, fg, bg) = match get_args(&args) {
         Err(err) => {
             eprintln!("{}", err);
-            return;
-        }
-        Ok(val) => val,
-    };
-    let (width, height) = match get_size(&args) {
-        Err(err) => {
-            eprintln!("{}", err);
-            return;
-        }
-        Ok(val) => val,
-    };
-    let padding = match get_padding(&args) {
-        Err(err) => {
-            eprintln!("{}", err);
-            return;
-        }
-        Ok(val) => val,
-    };
-    let fg = match get_colors(&args, "foreground") {
-        Err(err) => {
-            eprintln!("{}", err);
-            return;
-        }
-        Ok(val) => val,
-    };
-    let bg = match get_colors(&args, "background") {
-        Err(err) => {
-            eprintln!("{}", err);
-            return;
+            std::process::exit(1);
         }
         Ok(val) => val,
     };
 
-    // Picking an xkcd
+    //////////////////////////////////////////////////////////////////////
+    ///////////////////////// picking an xkcd ////////////////////////////
+    //////////////////////////////////////////////////////////////////////
+
     let last = match xkcd::get_last_xkcd().await {
         Ok(val) => val,
         Err(err) => {
@@ -200,6 +190,10 @@ async fn main() {
         return;
     }
 
+    //////////////////////////////////////////////////////////////////////
+    //////////////////////// loading the xkcd ////////////////////////////
+    //////////////////////////////////////////////////////////////////////
+
     let image = match xkcd::get_xkcd_img(num).await {
         Ok(val) => val,
         Err(err) => {
@@ -208,7 +202,6 @@ async fn main() {
         }
     };
 
-    // Load
     let img = ImageReader::new(Cursor::new(image))
         .with_guessed_format()
         .unwrap()
