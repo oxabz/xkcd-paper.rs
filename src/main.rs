@@ -5,20 +5,18 @@ mod xkcd;
 mod caching;
 mod args;
 
-use crate::utils::ResultExt;
 use crate::wallpaper::set_wallpaper;
 use crate::args::XkcdMode;
-use getopts::Occur;
+use crate::xkcd::get_xkcd_img;
+use crate::args::{setup_args, get_args};
+use crate::caching::{get_cached_xkcd, cache_xkcd};
 use image::imageops::FilterType;
 use image::io::Reader as ImageReader;
-use image::{DynamicImage, GenericImage, GenericImageView, Pixel, Rgba};
+use image::{DynamicImage, GenericImage, GenericImageView, Pixel};
 use rand::Rng;
 use std::io::Cursor;
-use std::str::FromStr;
-use thiserror::Error;
-use crate::args::{setup_args, get_args};
 use std::process::exit;
-
+use futures::future::TryFutureExt;
 
 #[tokio::main(flavor = "current_thread")]
 async fn main() {
@@ -78,14 +76,21 @@ async fn main() {
     //////////////////////// loading the xkcd ////////////////////////////
     //////////////////////////////////////////////////////////////////////
 
-    let image = match xkcd::get_xkcd_img(num).await {
-        Ok(val) => val,
-        Err(err) => {
-            eprintln!("Error querying the xkcd comic image url : {}", err);
-            return;
+    let image = match get_cached_xkcd(num).or_else(|err| {
+        eprintln!("{}", err);
+        get_xkcd_img(num)
+    }).await {
+        Ok(img) => {
+            if let Err(err) = cache_xkcd(num, img.as_slice()).await {
+                eprintln!("{}", err)
+            }
+            img
+        }
+        Err(err)=>{
+            eprintln!("Could find the corresponding xkcd comic in cache or at xkcd.com : {}", err);
+            exit(1);
         }
     };
-
     //////////////////////////////////////////////////////////////////////
     /////////////////////// processing the image /////////////////////////
     //////////////////////////////////////////////////////////////////////
