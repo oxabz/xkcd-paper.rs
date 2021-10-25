@@ -1,4 +1,4 @@
-//#![deny(warnings)]
+#![deny(warnings)]
 mod utils;
 mod wallpaper;
 mod xkcd;
@@ -12,11 +12,12 @@ use crate::args::{setup_args, get_args};
 use crate::caching::{get_cached_xkcd, cache_xkcd};
 use image::imageops::FilterType;
 use image::io::Reader as ImageReader;
-use image::{DynamicImage, GenericImage, GenericImageView, Pixel};
+use image::{DynamicImage, GenericImage, GenericImageView, ImageBuffer};
 use rand::Rng;
 use std::io::Cursor;
 use std::process::exit;
 use futures::future::TryFutureExt;
+use rayon::prelude::*;
 
 #[tokio::main(flavor = "current_thread")]
 async fn main() {
@@ -47,6 +48,7 @@ async fn main() {
         Ok(val) => val,
     };
 
+
     //////////////////////////////////////////////////////////////////////
     ///////////////////////// picking an xkcd ////////////////////////////
     //////////////////////////////////////////////////////////////////////
@@ -72,11 +74,14 @@ async fn main() {
         exit(1);
     }
 
+
+
     //////////////////////////////////////////////////////////////////////
     //////////////////////// loading the xkcd ////////////////////////////
     //////////////////////////////////////////////////////////////////////
 
     let image = match get_cached_xkcd(num).or_else(|err| {
+
         eprintln!("{}", err);
         get_xkcd_img(num)
     }).await {
@@ -91,29 +96,27 @@ async fn main() {
             exit(1);
         }
     };
+
+
+
     //////////////////////////////////////////////////////////////////////
     /////////////////////// processing the image /////////////////////////
     //////////////////////////////////////////////////////////////////////
 
-    let img = ImageReader::new(Cursor::new(image))
+
+    let mut img = ImageReader::new(Cursor::new(image))
         .with_guessed_format()
         .unwrap()
         .decode()
         .unwrap();
 
-    // Grayscale
-    let mut img = img.grayscale();
-
     // Invert
     img.invert();
 
     // Resize
-    let ratio_width = (width - padding.0) as f32 / img.width() as f32;
-    let ratio_height = (height - padding.1) as f32 / img.height() as f32;
-    let ratio = ratio_height.min(ratio_width).min(1.0);
     img.resize(
-        (img.width() as f32 * ratio) as u32,
-        (img.height() as f32 * ratio) as u32,
+        (width - padding.0) as f32 as u32,
+        (height - padding.1) as u32,
         FilterType::Triangle,
     );
 
@@ -125,24 +128,30 @@ async fn main() {
         (height as u32 - img.height()) / 2,
     ) {
         eprintln!("Image copy failed : {}", err);
-        return;
+        exit(1);
     }
 
-    //Coloring
-    let mut canva = canva.into_rgba8();
-    canva.pixels_mut().for_each(|pix| {
-        let grey = (pix.0[0] as f32 + pix.0[1] as f32 + pix.0[2] as f32) / 3.0 / 256.0;
-        *pix = fg.map2(&bg, |x, y| {
-            (x as f32 * grey + y as f32 * (1.0 - grey)) as u8
-        });
-    });
+
+
+    // Coloring
+    let ffg = [ fg.0[0] as f32, fg.0[1] as f32, fg.0[2] as f32, fg.0[3] as f32 ];
+    let fbg = [ bg.0[0] as f32, bg.0[1] as f32, bg.0[2] as f32, bg.0[3] as f32 ];
+
+    let raw = canva.into_rgba8().into_vec();
+    let colored_raw : Vec<_> = raw.into_par_iter().enumerate().map(|(i, el)|{
+        let color = i&3;
+        let mult =  el as f32 / 256.0;
+        (ffg[color] * mult + fbg[color] * (1.0 - mult)) as u8
+    }).collect();
 
     // Converting back to png
+    let canva = ImageBuffer::from_vec(width as u32, height as u32, colored_raw).unwrap();
     let canva = DynamicImage::ImageRgba8(canva);
     let mut image: Vec<u8> = Vec::new();
     canva
         .write_to(&mut image, image::ImageOutputFormat::Png)
         .unwrap();
+
 
     //////////////////////////////////////////////////////////////////////
     ////////////// Setting the wallpaper using feh ///////////////////////
