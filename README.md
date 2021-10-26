@@ -49,6 +49,17 @@ Options:
     -b, --background RRGGBB
                         background color
 ```
+### Using it with cron
+Cron doesnt work straight out with the program.
+
+You can call this small shellscript so that it works with cron
+```sh
+#!/bin/sh
+
+export HOME=/home/n7student/
+export DISPLAY=:0
+xkcd-paper
+```
 
 ## Avenue of improvement
 
@@ -61,3 +72,4 @@ Options:
 - [x] Removing the `.replace_err()` and replacing it with `.or(Err())` or making a `or_err()` 
   util
 - [ ] making the padding top:bot:left:right rather than horizontal and vertical
+
