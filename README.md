@@ -53,9 +53,11 @@ Options:
 ## Avenue of improvement
 
 - [ ] Caching the image, so the program can work offline. (Note : I'd currently advice to set a fallback wallpaper before calling the program)
-- [ ] Cleaning up the imports
+    - [x] Cahching
+    - [ ] Retry (Need to figure out how it should look)
+- [x] Cleaning up the imports
 - [ ] Moving stuff out of the main
-- [ ] Using opengl to avoid the 3 hours runtime
-- [ ] Removing the `.replace_err()` and replacing it with `.or(Err())` or making a `or_err()` 
+- [x] ~Using opengl to avoid the 3 hours runtime~ Used rayon to reduce render time
+- [x] Removing the `.replace_err()` and replacing it with `.or(Err())` or making a `or_err()` 
   util
 - [ ] making the padding top:bot:left:right rather than horizontal and vertical
