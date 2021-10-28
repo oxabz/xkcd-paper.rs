@@ -61,6 +61,48 @@ export DISPLAY=:0
 xkcd-paper
 ```
 
+### Adapting to the screen size
+
+```bash
+#!/bin/bash
+
+export HOME=/home/n7student/
+export DISPLAY=:0
+
+connected=$(xrandr | grep " connected ")
+
+margin=20
+
+min_w=99999999
+min_h=99999999
+max_w=0
+max_h=0
+
+re="([0-9]+)x([0-9]+)"
+
+for c in $connected; do
+        if [[ $c =~ $re ]]; then
+                if [[ ${BASH_REMATCH[1]} -lt $min_w ]]; then
+                        min_w=${BASH_REMATCH[1]}
+                fi
+                if [[ ${BASH_REMATCH[2]} -lt $min_h ]]; then
+                        min_h=${BASH_REMATCH[2]}
+                fi
+                if [[ ${BASH_REMATCH[1]} -gt $max_w ]]; then
+                        max_w=${BASH_REMATCH[1]}
+                fi
+                if [[ ${BASH_REMATCH[2]} -gt $max_h ]]; then
+                        max_h=${BASH_REMATCH[2]}
+                fi
+        fi
+done
+
+padding_x=$(($(($max_w-$min_w))/2-margin))
+padding_y=$(($(($max_h-$min_h))/2-margin))
+
+xkcd-paper -s "${max_w}x${max_h}" -p "${padding_x}:${padding_y}"
+```
+
 ## Avenue of improvement
 
 - [ ] Caching the image, so the program can work offline. (Note : I'd currently advice to set a fallback wallpaper before calling the program)
