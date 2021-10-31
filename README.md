@@ -97,8 +97,8 @@ for c in $connected; do
         fi
 done
 
-padding_x=$(($(($max_w-$min_w))/2-margin))
-padding_y=$(($(($max_h-$min_h))/2-margin))
+padding_x=$(($(($max_w-$min_w))/2+margin))
+padding_y=$(($(($max_h-$min_h))/2+margin))
 
 xkcd-paper -s "${max_w}x${max_h}" -p "${padding_x}:${padding_y}"
 ```
